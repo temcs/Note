@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<meta name="description" content="A simple offline-first quick notes app">
+<title>Quick Notes</title>
+
+<style>
+:root{
+  --primary:#4f46e5;
+  --primary-hover:#4338ca;
+  --bg:#f3f4f6;
+  --card:#fff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --danger:#ef4444;
+  --success:#10b981;
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  padding:12px 16px 24px;
+}
+
+.app{
+  width:100%;
+  max-width:600px;
+  margin:0 auto;
+}
+
+.header{
+  position:sticky;
+  top:12px;
+  z-index:20;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(229,231,235,.9);
+  border-radius:18px;
+  padding:10px;
+  box-shadow:0 6px 20px rgba(0,0,0,.07);
+}
+
+.header-row{
+  display:flex;
+  gap:8px;
+}
+
+#noteInput{
+  flex:1;
+  min-width:0;
+  height:44px;
+  resize:none;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:11px 12px;
+  font-size:15px;
+  line-height:20px;
+  outline:none;
+  background:#fff;
+  color:var(--text);
+}
+
+#noteInput:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(79,70,229,.10);
+}
+
+.btn{
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  border:0;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:#fff;
+  background:var(--primary);
+  font-size:22px;
+  transition:transform .1s,background .2s;
+}
+
+.btn:hover{background:var(--primary-hover)}
+.btn:active{transform:scale(.94)}
+
+#installBtn{
+  display:none;
+  background:var(--success);
+  font-size:19px;
+}
+
+.notes-list{
+  margin-top:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.empty{
+  text-align:center;
+  color:var(--muted);
+  padding:44px 20px;
+  font-size:14px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid rgba(229,231,235,.85);
+  border-radius:14px;
+  padding:10px;
+  min-height:64px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.035);
+  transition:transform .15s,box-shadow .15s,opacity .15s;
+  user-select:none;
+  touch-action:pan-y;
+}
+
+.card.dragging{
+  opacity:.5;
+  transform:scale(.98);
+  background:#eef2ff;
+}
+
+.drag-handle{
+  flex:0 0 28px;
+  color:#9ca3af;
+  font-size:18px;
+  text-align:center;
+  cursor:grab;
+  touch-action:none;
+}
+
+.card-content{
+  flex:1;
+  min-width:0;
+  font-size:15px;
+  line-height:1.4;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  cursor:pointer;
+}
+
+.card-actions{
+  display:flex;
+  align-items:center;
+  gap:2px;
+}
+
+.icon-btn{
+  width:34px;
+  height:34px;
+  border:0;
+  background:transparent;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+}
+
+.icon-btn:hover{background:#f3f4f6;color:var(--text)}
+.icon-btn.delete:hover{background:#fef2f2;color:var(--danger)}
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  padding:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .2s ease,visibility .2s ease;
+}
+
+.modal-overlay.active{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+.modal{
+  width:100%;
+  max-width:500px;
+  max-height:80vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.2);
+  transform:translateY(12px) scale(.98);
+  transition:transform .2s ease;
+}
+
+.modal-overlay.active .modal{
+  transform:translateY(0) scale(1);
+}
+
+.modal-body{
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  font-size:16px;
+  line-height:1.55;
+  margin-bottom:16px;
+}
+
+.modal-close{
+  width:100%;
+  height:42px;
+  border:0;
+  border-radius:10px;
+  background:var(--bg);
+  color:var(--text);
+  font-weight:600;
+  cursor:pointer;
+}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  z-index:200;
+  transform:translate(-50%,120px);
+  background:#111827;
+  color:#fff;
+  padding:9px 16px;
+  border-radius:999px;
+  font-size:13px;
+  box-shadow:0 5px 18px rgba(0,0,0,.2);
+  transition:transform .25s ease;
+  pointer-events:none;
+}
+
+.toast.show{transform:translate(-50%,0)}
+
+@media (max-width:420px){
+  body{padding-left:10px;padding-right:10px}
+  .card-actions{gap:0}
+  .icon-btn{width:32px;height:32px}
+}
+</style>
+</head>
+
+<body>
+<main class="app">
+  <section class="header" aria-label="Add note">
+    <div class="header-row">
+      <textarea id="noteInput" maxlength="5000" placeholder="Write a note..." aria-label="Write a note"></textarea>
+      <button class="btn" id="addBtn" type="button" title="Add note" aria-label="Add note">+</button>
+      <button class="btn" id="installBtn" type="button" title="Install app" aria-label="Install app">📲</button>
+    </div>
+  </section>
+
+  <section class="notes-list" id="notesList" aria-live="polite"></section>
+</main>
+
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Note preview">
+  <div class="modal" id="modal">
+    <div class="modal-body" id="modalContent"></div>
+    <button class="modal-close" id="modalClose" type="button">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "quick_notes_v2";
+
+  let notes = loadNotes();
+  let deferredPrompt = null;
+  let holdTimer = null;
+  let draggedIndex = null;
+
+  const noteInput = document.getElementById("noteInput");
+  const notesList = document.getElementById("notesList");
+  const addBtn = document.getElementById("addBtn");
+  const installBtn = document.getElementById("installBtn");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalContent = document.getElementById("modalContent");
+  const modalClose = document.getElementById("modalClose");
+  const toast = document.getElementById("toast");
+
+  function loadNotes() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      return Array.isArray(saved)
+        ? saved.filter(item => typeof item === "string" && item.trim())
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveNotes() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+    } catch {
+      showToast("Unable to save notes");
+    }
+  }
+
+  function renderNotes() {
+    notesList.replaceChildren();
+
+    if (!notes.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "No notes yet. Write your first note above.";
+      notesList.appendChild(empty);
+      return;
+    }
+
+    notes.forEach((text, index) => {
+      const card = document.createElement("article");
+      card.className = "card";
+      card.draggable = true;
+      card.dataset.index = index;
+
+      const handle = document.createElement("div");
+      handle.className = "drag-handle";
+      handle.textContent = "⋮⋮";
+      handle.title = "Drag to reorder";
+      handle.setAttribute("aria-label", "Drag to reorder");
+
+      const content = document.createElement("div");
+      content.className = "card-content";
+      content.textContent = text;
+      content.title = "Hold to view full note";
+
+      const actions = document.createElement("div");
+      actions.className = "card-actions";
+
+      const copy = makeActionButton("📋", "Copy", () => copyNote(index));
+      const edit = makeActionButton("✏️", "Edit", () => editNote(index));
+      const del = makeActionButton("🗑️", "Delete", () => deleteNote(index));
+      del.classList.add("delete");
+
+      actions.append(copy, edit, del);
+      card.append(handle, content, actions);
+
+      setupHold(content, text);
+
+      card.addEventListener("dragstart", handleDragStart);
+      card.addEventListener("dragover", handleDragOver);
+      card.addEventListener("drop", handleDrop);
+      card.addEventListener("dragend", handleDragEnd);
+
+      notesList.appendChild(card);
+    });
+  }
+
+  function makeActionButton(icon, label, handler) {
+    const button = document.createElement("button");
+    button.className = "icon-btn";
+    button.type = "button";
+    button.textContent = icon;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.addEventListener("click", handler);
+    return button;
+  }
+
+  function setupHold(element, text) {
+    const start = (event) => {
+      if (event.type === "mousedown" && event.button !== 0) return;
+
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        openModal(text);
+        holdTimer = null;
+      }, 550);
+    };
+
+    const cancel = () => {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    };
+
+    element.addEventListener("touchstart", start, { passive: true });
+    element.addEventListener("touchend", cancel);
+    element.addEventListener("touchcancel", cancel);
+    element.addEventListener("touchmove", cancel, { passive: true });
+    element.addEventListener("mousedown", start);
+    element.addEventListener("mouseup", cancel);
+    element.addEventListener("mouseleave", cancel);
+  }
+
+  function addNote() {
+    const text = noteInput.value.trim();
+    if (!text) {
+      noteInput.focus();
+      return;
+    }
+
+    notes.unshift(text);
+    saveNotes();
+    renderNotes();
+    noteInput.value = "";
+    noteInput.focus();
+    showToast("Note added");
+  }
+
+  async function copyNote(index) {
+    const text = notes[index];
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard!");
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        document.execCommand("copy");
+        showToast("Copied to clipboard!");
+      } catch {
+        showToast("Copy failed");
+      } finally {
+        textarea.remove();
+      }
+    }
+  }
+
+  function editNote(index) {
+    const updated = prompt("Edit your note:", notes[index]);
+    if (updated === null) return;
+
+    const text = updated.trim();
+    if (!text) {
+      showToast("Note cannot be empty");
+      return;
+    }
+
+    notes[index] = text;
+    saveNotes();
+    renderNotes();
+    showToast("Note updated");
+  }
+
+  function deleteNote(index) {
+    if (!confirm("Delete this note?")) return;
+
+    notes.splice(index, 1);
+    saveNotes();
+    renderNotes();
+    showToast("Note deleted");
+  }
+
+  function openModal(text) {
+    modalContent.textContent = text;
+    modalOverlay.classList.add("active");
+    modalClose.focus();
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove("active");
+  }
+
+  function handleDragStart(event) {
+    draggedIndex = Number(this.dataset.index);
+    this.classList.add("dragging");
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", String(draggedIndex));
+    }
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+
+    const targetIndex = Number(this.dataset.index);
+
+    if (
+      draggedIndex !== null &&
+      Number.isInteger(draggedIndex) &&
+      draggedIndex !== targetIndex
+    ) {
+      const [moved] = notes.splice(draggedIndex, 1);
+      notes.splice(targetIndex, 0, moved);
+      saveNotes();
+      renderNotes();
+      showToast("Notes reordered");
+    }
+  }
+
+  function handleDragEnd() {
+    this.classList.remove("dragging");
+    draggedIndex = null;
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove("show"), 1800);
+  }
+
+  // Keyboard shortcuts
+  addBtn.addEventListener("click", addNote);
+
+  noteInput.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      addNote();
+    }
+  });
+
+  modalClose.addEventListener("click", closeModal);
+
+  modalOverlay.addEventListener("click", (event) => {
+    if (event.target === modalOverlay) closeModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeModal();
+  });
+
+  // PWA install prompt.
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredPrompt = event;
+    installBtn.style.display = "flex";
+  });
+
+  installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+
+    try {
+      await deferredPrompt.userChoice;
+    } catch {}
+
+    deferredPrompt = null;
+    installBtn.style.display = "none";
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    installBtn.style.display = "none";
+    showToast("App installed");
+  });
+
+  // Render.
+  renderNotes();
+})();
+</script>
+</body>
+</html>
