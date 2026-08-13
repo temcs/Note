@@ -1,588 +1,984 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#4f46e5">
-<meta name="description" content="A simple offline-first quick notes app">
-<title>Quick Notes</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="Quick Notes — fast, simple notes that stay on your device.">
+  <title>Quick Notes</title>
 
-<style>
-:root{
-  --primary:#4f46e5;
-  --primary-hover:#4338ca;
-  --bg:#f3f4f6;
-  --card:#fff;
-  --text:#1f2937;
-  --muted:#6b7280;
-  --border:#e5e7eb;
-  --danger:#ef4444;
-  --success:#10b981;
-}
+  <!-- Font Awesome 6 Free -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  >
 
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  -webkit-tap-highlight-color:transparent;
-}
+  <!-- Dynamic PWA Manifest -->
+  <link rel="manifest" id="manifestLink">
 
-body{
-  min-height:100vh;
-  background:var(--bg);
-  color:var(--text);
-  padding:12px 16px 24px;
-}
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: #e0e7ff;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #94a3b8;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --success: #10b981;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.12);
+    }
 
-.app{
-  width:100%;
-  max-width:600px;
-  margin:0 auto;
-}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-.header{
-  position:sticky;
-  top:12px;
-  z-index:20;
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border:1px solid rgba(229,231,235,.9);
-  border-radius:18px;
-  padding:10px;
-  box-shadow:0 6px 20px rgba(0,0,0,.07);
-}
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px 16px 32px;
+    }
 
-.header-row{
-  display:flex;
-  gap:8px;
-}
+    button,
+    textarea {
+      font: inherit;
+    }
 
-#noteInput{
-  flex:1;
-  min-width:0;
-  height:44px;
-  resize:none;
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:11px 12px;
-  font-size:15px;
-  line-height:20px;
-  outline:none;
-  background:#fff;
-  color:var(--text);
-}
+    button {
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      background: none;
+    }
 
-#noteInput:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 3px rgba(79,70,229,.10);
-}
+    .app {
+      width: 100%;
+      max-width: 580px;
+      margin: 0 auto;
+    }
 
-.btn{
-  width:44px;
-  height:44px;
-  flex:0 0 44px;
-  border:0;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  color:#fff;
-  background:var(--primary);
-  font-size:22px;
-  transition:transform .1s,background .2s;
-}
+    /* =========================
+       HEADER / ADD NOTE
+       ========================= */
 
-.btn:hover{background:var(--primary-hover)}
-.btn:active{transform:scale(.94)}
+    .header {
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 10px;
+      box-shadow: var(--shadow-md);
+    }
 
-#installBtn{
-  display:none;
-  background:var(--success);
-  font-size:19px;
-}
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-.notes-list{
-  margin-top:18px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
+    #noteInput {
+      flex: 1;
+      min-width: 0;
+      height: 40px;
+      resize: none;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 15px;
+      line-height: 22px;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      transition: border-color .2s, background .2s;
+    }
 
-.empty{
-  text-align:center;
-  color:var(--muted);
-  padding:44px 20px;
-  font-size:14px;
-}
+    #noteInput::placeholder {
+      color: var(--muted);
+    }
 
-.card{
-  background:var(--card);
-  border:1px solid rgba(229,231,235,.85);
-  border-radius:14px;
-  padding:10px;
-  min-height:64px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  box-shadow:0 2px 8px rgba(0,0,0,.035);
-  transition:transform .15s,box-shadow .15s,opacity .15s;
-  user-select:none;
-  touch-action:pan-y;
-}
+    #noteInput:focus {
+      background: #ffffff;
+      border-color: var(--border);
+    }
 
-.card.dragging{
-  opacity:.5;
-  transform:scale(.98);
-  background:#eef2ff;
-}
+    /* Modern Light Icon Buttons */
+    .btn-light {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #64748b;
+      background: transparent;
+      font-size: 16px;
+      border: 1px solid transparent;
+      transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-.drag-handle{
-  flex:0 0 28px;
-  color:#9ca3af;
-  font-size:18px;
-  text-align:center;
-  cursor:grab;
-  touch-action:none;
-}
+    .btn-light:hover {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
 
-.card-content{
-  flex:1;
-  min-width:0;
-  font-size:15px;
-  line-height:1.4;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  cursor:pointer;
-}
+    .btn-light:active {
+      transform: scale(0.92);
+    }
 
-.card-actions{
-  display:flex;
-  align-items:center;
-  gap:2px;
-}
+    .btn-light:focus-visible,
+    .modal-close:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
 
-.icon-btn{
-  width:34px;
-  height:34px;
-  border:0;
-  background:transparent;
-  border-radius:8px;
-  cursor:pointer;
-  font-size:15px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--muted);
-}
+    #installBtn {
+      display: none;
+      color: var(--success);
+    }
 
-.icon-btn:hover{background:#f3f4f6;color:var(--text)}
-.icon-btn.delete:hover{background:#fef2f2;color:var(--danger)}
+    #installBtn:hover {
+      background: #ecfdf5;
+      color: #059669;
+    }
 
-.modal-overlay{
-  position:fixed;
-  inset:0;
-  z-index:100;
-  padding:20px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,0,0,.45);
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-  transition:opacity .2s ease,visibility .2s ease;
-}
+    /* =========================
+       NOTES LIST
+       ========================= */
 
-.modal-overlay.active{
-  opacity:1;
-  visibility:visible;
-  pointer-events:auto;
-}
+    .notes-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
 
-.modal{
-  width:100%;
-  max-width:500px;
-  max-height:80vh;
-  overflow:auto;
-  background:#fff;
-  border-radius:18px;
-  padding:20px;
-  box-shadow:0 18px 50px rgba(0,0,0,.2);
-  transform:translateY(12px) scale(.98);
-  transition:transform .2s ease;
-}
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 48px 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
 
-.modal-overlay.active .modal{
-  transform:translateY(0) scale(1);
-}
+    .card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 10px 8px 6px;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: var(--shadow-sm);
+      user-select: none;
+      touch-action: pan-y;
+      transition:
+        transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.2s ease,
+        opacity 0.2s ease;
+    }
 
-.modal-body{
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-  font-size:16px;
-  line-height:1.55;
-  margin-bottom:16px;
-}
+    .card.dragging {
+      opacity: 0.65;
+      transform: scale(1.02);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-light);
+      z-index: 10;
+    }
 
-.modal-close{
-  width:100%;
-  height:42px;
-  border:0;
-  border-radius:10px;
-  background:var(--bg);
-  color:var(--text);
-  font-weight:600;
-  cursor:pointer;
-}
+    .card.drop-target {
+      transform: translateY(4px);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
 
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:22px;
-  z-index:200;
-  transform:translate(-50%,120px);
-  background:#111827;
-  color:#fff;
-  padding:9px 16px;
-  border-radius:999px;
-  font-size:13px;
-  box-shadow:0 5px 18px rgba(0,0,0,.2);
-  transition:transform .25s ease;
-  pointer-events:none;
-}
+    /* Drag Handle */
+    .drag-handle {
+      width: 28px;
+      height: 36px;
+      flex: 0 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #cbd5e1;
+      font-size: 13px;
+      cursor: grab;
+      touch-action: none;
+      border-radius: 6px;
+      transition: color .15s, background .15s;
+    }
 
-.toast.show{transform:translate(-50%,0)}
+    .drag-handle:hover {
+      color: #64748b;
+      background: #f1f5f9;
+    }
 
-@media (max-width:420px){
-  body{padding-left:10px;padding-right:10px}
-  .card-actions{gap:0}
-  .icon-btn{width:32px;height:32px}
-}
-</style>
+    .drag-handle:active {
+      cursor: grabbing;
+      color: var(--primary);
+    }
+
+    .card-content {
+      flex: 1;
+      min-width: 0;
+      font-size: 14.5px;
+      line-height: 1.45;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      padding: 4px 2px;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 13px;
+      transition: all .15s ease;
+    }
+
+    .icon-btn:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .icon-btn:active {
+      transform: scale(.92);
+    }
+
+    .icon-btn.delete:hover {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    /* =========================
+       MODAL
+       ========================= */
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.35);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 480px;
+      max-height: 80vh;
+      overflow: auto;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.95) translateY(10px);
+      transition: transform .2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-body {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      width: 100%;
+      height: 40px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background .18s, color .18s, transform .12s;
+    }
+
+    .modal-close:hover {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .modal-close:active {
+      transform: scale(.98);
+    }
+
+    /* =========================
+       TOAST
+       ========================= */
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 200;
+      transform: translate(-50%, 100px);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 8px 18px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
-<main class="app">
-  <section class="header" aria-label="Add note">
-    <div class="header-row">
-      <textarea id="noteInput" maxlength="5000" placeholder="Write a note..." aria-label="Write a note"></textarea>
-      <button class="btn" id="addBtn" type="button" title="Add note" aria-label="Add note">+</button>
-      <button class="btn" id="installBtn" type="button" title="Install app" aria-label="Install app">📲</button>
+  <main class="app">
+
+    <section class="header" aria-label="Add note">
+      <div class="header-row">
+
+        <textarea
+          id="noteInput"
+          maxlength="5000"
+          placeholder="Write a note..."
+          aria-label="Write a note"
+        ></textarea>
+
+        <!-- Add -->
+        <button
+          class="btn-light"
+          id="addBtn"
+          type="button"
+          title="Add note"
+          aria-label="Add note"
+        >
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        </button>
+
+        <!-- Install PWA -->
+        <button
+          class="btn-light"
+          id="installBtn"
+          type="button"
+          title="Install Quick Notes"
+          aria-label="Install Quick Notes"
+        >
+          <i class="fa-solid fa-download" aria-hidden="true"></i>
+        </button>
+
+      </div>
+    </section>
+
+    <section
+      class="notes-list"
+      id="notesList"
+      aria-live="polite"
+    ></section>
+
+  </main>
+
+  <!-- Full Note Modal -->
+  <div
+    class="modal-overlay"
+    id="modalOverlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Note preview"
+  >
+    <div class="modal">
+
+      <div
+        class="modal-body"
+        id="modalContent"
+      ></div>
+
+      <button
+        class="modal-close"
+        id="modalClose"
+        type="button"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        <span>Close</span>
+      </button>
+
     </div>
-  </section>
-
-  <section class="notes-list" id="notesList" aria-live="polite"></section>
-</main>
-
-<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Note preview">
-  <div class="modal" id="modal">
-    <div class="modal-body" id="modalContent"></div>
-    <button class="modal-close" id="modalClose" type="button">Close</button>
   </div>
-</div>
 
-<div class="toast" id="toast" role="status"></div>
+  <div
+    class="toast"
+    id="toast"
+    role="status"
+  ></div>
 
-<script>
-(() => {
-  "use strict";
+  <script>
+    (() => {
+      "use strict";
 
-  const STORAGE_KEY = "quick_notes_v2";
+      const STORAGE_KEY = "quick_notes_v5";
 
-  let notes = loadNotes();
-  let deferredPrompt = null;
-  let holdTimer = null;
-  let draggedIndex = null;
+      let notes = loadNotes();
+      let deferredPrompt = null;
+      let holdTimer = null;
 
-  const noteInput = document.getElementById("noteInput");
-  const notesList = document.getElementById("notesList");
-  const addBtn = document.getElementById("addBtn");
-  const installBtn = document.getElementById("installBtn");
-  const modalOverlay = document.getElementById("modalOverlay");
-  const modalContent = document.getElementById("modalContent");
-  const modalClose = document.getElementById("modalClose");
-  const toast = document.getElementById("toast");
+      let draggedIndex = null;
+      let dragSource = null;
 
-  function loadNotes() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      return Array.isArray(saved)
-        ? saved.filter(item => typeof item === "string" && item.trim())
-        : [];
-    } catch {
-      return [];
-    }
-  }
+      let pointerId = null;
+      let pointerCard = null;
+      let pointerStartY = 0;
+      let pointerStarted = false;
 
-  function saveNotes() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-    } catch {
-      showToast("Unable to save notes");
-    }
-  }
+      const $ = id => document.getElementById(id);
 
-  function renderNotes() {
-    notesList.replaceChildren();
+      const noteInput = $("noteInput");
+      const notesList = $("notesList");
+      const addBtn = $("addBtn");
+      const installBtn = $("installBtn");
+      const modalOverlay = $("modalOverlay");
+      const modalContent = $("modalContent");
+      const modalClose = $("modalClose");
+      const toast = $("toast");
 
-    if (!notes.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "No notes yet. Write your first note above.";
-      notesList.appendChild(empty);
-      return;
-    }
+      /* ==========================================
+         PWA MANIFEST + APP ICON GENERATION
+         ========================================== */
 
-    notes.forEach((text, index) => {
-      const card = document.createElement("article");
-      card.className = "card";
-      card.draggable = true;
-      card.dataset.index = index;
+      const iconSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+          <rect width="512" height="512" rx="128" fill="#f8fafc"/>
+          <rect x="96" y="80" width="320" height="352" rx="32" fill="#ffffff" stroke="#e2e8f0" stroke-width="16"/>
+          <path d="M160 176h192M160 240h192M160 304h112" stroke="#6366f1" stroke-width="24" stroke-linecap="round"/>
+          <circle cx="336" cy="320" r="40" fill="#10b981"/>
+          <path d="M320 320l10 10 20-20" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
 
-      const handle = document.createElement("div");
-      handle.className = "drag-handle";
-      handle.textContent = "⋮⋮";
-      handle.title = "Drag to reorder";
-      handle.setAttribute("aria-label", "Drag to reorder");
+      const iconData = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(iconSvg);
 
-      const content = document.createElement("div");
-      content.className = "card-content";
-      content.textContent = text;
-      content.title = "Hold to view full note";
+      const manifest = {
+        name: "Quick Notes",
+        short_name: "Quick Notes",
+        description: "Fast, simple notes that stay on your device.",
+        start_url: location.href.split("#")[0],
+        scope: "./",
+        display: "standalone",
+        orientation: "portrait",
+        background_color: "#f8fafc",
+        theme_color: "#f8fafc",
+        icons: [
+          { src: iconData, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+          { src: iconData, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+        ]
+      };
 
-      const actions = document.createElement("div");
-      actions.className = "card-actions";
+      $("manifestLink").href = "data:application/manifest+json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest));
 
-      const copy = makeActionButton("📋", "Copy", () => copyNote(index));
-      const edit = makeActionButton("✏️", "Edit", () => editNote(index));
-      const del = makeActionButton("🗑️", "Delete", () => deleteNote(index));
-      del.classList.add("delete");
+      window.addEventListener("beforeinstallprompt", event => {
+        event.preventDefault();
+        deferredPrompt = event;
+        installBtn.style.display = "flex";
+      });
 
-      actions.append(copy, edit, del);
-      card.append(handle, content, actions);
+      installBtn.addEventListener("click", async () => {
+        if (!deferredPrompt) {
+          showToast("Use your browser menu → Add to Home screen");
+          return;
+        }
 
-      setupHold(content, text);
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch {}
+        deferredPrompt = null;
+        installBtn.style.display = "none";
+      });
 
-      card.addEventListener("dragstart", handleDragStart);
-      card.addEventListener("dragover", handleDragOver);
-      card.addEventListener("drop", handleDrop);
-      card.addEventListener("dragend", handleDragEnd);
+      window.addEventListener("appinstalled", () => {
+        deferredPrompt = null;
+        installBtn.style.display = "none";
+        showToast("Quick Notes installed!");
+      });
 
-      notesList.appendChild(card);
-    });
-  }
+      /* ==========================================
+         STORAGE
+         ========================================== */
 
-  function makeActionButton(icon, label, handler) {
-    const button = document.createElement("button");
-    button.className = "icon-btn";
-    button.type = "button";
-    button.textContent = icon;
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.addEventListener("click", handler);
-    return button;
-  }
-
-  function setupHold(element, text) {
-    const start = (event) => {
-      if (event.type === "mousedown" && event.button !== 0) return;
-
-      clearTimeout(holdTimer);
-      holdTimer = setTimeout(() => {
-        openModal(text);
-        holdTimer = null;
-      }, 550);
-    };
-
-    const cancel = () => {
-      clearTimeout(holdTimer);
-      holdTimer = null;
-    };
-
-    element.addEventListener("touchstart", start, { passive: true });
-    element.addEventListener("touchend", cancel);
-    element.addEventListener("touchcancel", cancel);
-    element.addEventListener("touchmove", cancel, { passive: true });
-    element.addEventListener("mousedown", start);
-    element.addEventListener("mouseup", cancel);
-    element.addEventListener("mouseleave", cancel);
-  }
-
-  function addNote() {
-    const text = noteInput.value.trim();
-    if (!text) {
-      noteInput.focus();
-      return;
-    }
-
-    notes.unshift(text);
-    saveNotes();
-    renderNotes();
-    noteInput.value = "";
-    noteInput.focus();
-    showToast("Note added");
-  }
-
-  async function copyNote(index) {
-    const text = notes[index];
-    if (!text) return;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast("Copied to clipboard!");
-    } catch {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      try {
-        document.execCommand("copy");
-        showToast("Copied to clipboard!");
-      } catch {
-        showToast("Copy failed");
-      } finally {
-        textarea.remove();
+      function loadNotes() {
+        try {
+          const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+          return Array.isArray(data) ? data.filter(item => typeof item === "string" && item.trim().length > 0) : [];
+        } catch {
+          return [];
+        }
       }
-    }
-  }
 
-  function editNote(index) {
-    const updated = prompt("Edit your note:", notes[index]);
-    if (updated === null) return;
+      function saveNotes() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+        } catch {
+          showToast("Unable to save notes");
+        }
+      }
 
-    const text = updated.trim();
-    if (!text) {
-      showToast("Note cannot be empty");
-      return;
-    }
+      /* ==========================================
+         RENDER NOTES
+         ========================================== */
 
-    notes[index] = text;
-    saveNotes();
-    renderNotes();
-    showToast("Note updated");
-  }
+      function renderNotes() {
+        notesList.replaceChildren();
 
-  function deleteNote(index) {
-    if (!confirm("Delete this note?")) return;
+        if (!notes.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No notes yet. Write your first note above.";
+          notesList.appendChild(empty);
+          return;
+        }
 
-    notes.splice(index, 1);
-    saveNotes();
-    renderNotes();
-    showToast("Note deleted");
-  }
+        notes.forEach((text, index) => {
+          const card = document.createElement("article");
+          card.className = "card";
+          card.dataset.index = index;
+          card.draggable = true;
 
-  function openModal(text) {
-    modalContent.textContent = text;
-    modalOverlay.classList.add("active");
-    modalClose.focus();
-  }
+          /* Drag handle */
+          const handle = document.createElement("div");
+          handle.className = "drag-handle";
+          handle.title = "Drag to reorder";
+          handle.setAttribute("aria-label", "Drag to reorder");
+          handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
 
-  function closeModal() {
-    modalOverlay.classList.remove("active");
-  }
+          /* Note text */
+          const content = document.createElement("div");
+          content.className = "card-content";
+          content.textContent = text;
+          content.title = "Hold to view full note";
 
-  function handleDragStart(event) {
-    draggedIndex = Number(this.dataset.index);
-    this.classList.add("dragging");
+          /* Actions */
+          const actions = document.createElement("div");
+          actions.className = "card-actions";
+          actions.append(
+            actionButton("fa-copy", "Copy", () => copyNote(index)),
+            actionButton("fa-pen", "Edit", () => editNote(index)),
+            actionButton("fa-trash-can", "Delete", () => deleteNote(index), "delete")
+          );
 
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", String(draggedIndex));
-    }
-  }
+          card.append(handle, content, actions);
 
-  function handleDragOver(event) {
-    event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-  }
+          setupHold(content, text);
 
-  function handleDrop(event) {
-    event.preventDefault();
+          /* Desktop Drag & Drop */
+          card.addEventListener("dragstart", onDragStart);
+          card.addEventListener("dragover", onDragOver);
+          card.addEventListener("dragenter", onDragEnter);
+          card.addEventListener("dragleave", onDragLeave);
+          card.addEventListener("drop", onDrop);
+          card.addEventListener("dragend", onDragEnd);
 
-    const targetIndex = Number(this.dataset.index);
+          /* Mobile Pointer/Touch Drag */
+          handle.addEventListener("pointerdown", startPointerDrag);
 
-    if (
-      draggedIndex !== null &&
-      Number.isInteger(draggedIndex) &&
-      draggedIndex !== targetIndex
-    ) {
-      const [moved] = notes.splice(draggedIndex, 1);
-      notes.splice(targetIndex, 0, moved);
-      saveNotes();
+          notesList.appendChild(card);
+        });
+      }
+
+      function actionButton(icon, label, handler, extra = "") {
+        const button = document.createElement("button");
+        button.className = "icon-btn " + extra;
+        button.type = "button";
+        button.title = label;
+        button.setAttribute("aria-label", label);
+        button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>`;
+        button.addEventListener("click", handler);
+        return button;
+      }
+
+      /* ==========================================
+         LONG PRESS PREVIEW
+         ========================================== */
+
+      function setupHold(element, text) {
+        const start = event => {
+          if (event.type === "mousedown" && event.button !== 0) return;
+          clearTimeout(holdTimer);
+          holdTimer = setTimeout(() => {
+            openModal(text);
+            holdTimer = null;
+          }, 500);
+        };
+
+        const cancel = () => {
+          clearTimeout(holdTimer);
+          holdTimer = null;
+        };
+
+        element.addEventListener("touchstart", start, { passive: true });
+        element.addEventListener("touchend", cancel);
+        element.addEventListener("touchcancel", cancel);
+        element.addEventListener("touchmove", cancel, { passive: true });
+        element.addEventListener("mousedown", start);
+        element.addEventListener("mouseup", cancel);
+        element.addEventListener("mouseleave", cancel);
+      }
+
+      /* ==========================================
+         ADD NOTE
+         ========================================== */
+
+      function addNote() {
+        const text = noteInput.value.trim();
+        if (!text) {
+          noteInput.focus();
+          return;
+        }
+
+        notes.unshift(text);
+        saveNotes();
+        renderNotes();
+        noteInput.value = "";
+        noteInput.focus();
+        showToast("Note added");
+      }
+
+      /* ==========================================
+         COPY
+         ========================================== */
+
+      async function copyNote(index) {
+        const text = notes[index];
+        if (!text) return;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast("Copied to clipboard!");
+        } catch {
+          const area = document.createElement("textarea");
+          area.value = text;
+          area.style.position = "fixed";
+          area.style.opacity = "0";
+          document.body.appendChild(area);
+          area.select();
+          try {
+            document.execCommand("copy");
+            showToast("Copied to clipboard!");
+          } catch {
+            showToast("Copy failed");
+          } finally {
+            area.remove();
+          }
+        }
+      }
+
+      /* ==========================================
+         EDIT
+         ========================================== */
+
+      function editNote(index) {
+        const updated = prompt("Edit your note:", notes[index]);
+        if (updated === null) return;
+
+        const text = updated.trim();
+        if (!text) {
+          showToast("Note cannot be empty");
+          return;
+        }
+
+        notes[index] = text;
+        saveNotes();
+        renderNotes();
+        showToast("Note updated");
+      }
+
+      /* ==========================================
+         DELETE
+         ========================================== */
+
+      function deleteNote(index) {
+        if (!confirm("Delete this note?")) return;
+
+        notes.splice(index, 1);
+        saveNotes();
+        renderNotes();
+        showToast("Note deleted");
+      }
+
+      /* ==========================================
+         MODAL
+         ========================================== */
+
+      function openModal(text) {
+        modalContent.textContent = text;
+        modalOverlay.classList.add("active");
+        modalClose.focus();
+      }
+
+      function closeModal() {
+        modalOverlay.classList.remove("active");
+      }
+
+      modalClose.addEventListener("click", closeModal);
+      modalOverlay.addEventListener("click", event => {
+        if (event.target === modalOverlay) closeModal();
+      });
+
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeModal();
+      });
+
+      /* ==========================================
+         DESKTOP DRAG & DROP
+         ========================================== */
+
+      function onDragStart(event) {
+        draggedIndex = Number(this.dataset.index);
+        dragSource = this;
+        this.classList.add("dragging");
+
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", String(draggedIndex));
+        }
+      }
+
+      function onDragOver(event) {
+        event.preventDefault();
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "move";
+        }
+      }
+
+      function onDragEnter(event) {
+        event.preventDefault();
+        if (this !== dragSource) {
+          this.classList.add("drop-target");
+        }
+      }
+
+      function onDragLeave() {
+        this.classList.remove("drop-target");
+      }
+
+      function onDrop(event) {
+        event.preventDefault();
+        const target = Number(this.dataset.index);
+        this.classList.remove("drop-target");
+        moveNote(draggedIndex, target);
+      }
+
+      function onDragEnd() {
+        document.querySelectorAll(".drop-target").forEach(item => item.classList.remove("drop-target"));
+        this.classList.remove("dragging");
+        draggedIndex = null;
+        dragSource = null;
+      }
+
+      /* ==========================================
+         MOBILE TOUCH / POINTER DRAG
+         ========================================== */
+
+      function startPointerDrag(event) {
+        if (event.pointerType === "mouse") return;
+
+        const card = event.currentTarget.closest(".card");
+        if (!card) return;
+
+        pointerId = event.pointerId;
+        pointerCard = card;
+        pointerStartY = event.clientY;
+        pointerStarted = false;
+
+        card.setPointerCapture?.(pointerId);
+        card.addEventListener("pointermove", pointerMove);
+        card.addEventListener("pointerup", pointerEnd);
+        card.addEventListener("pointercancel", pointerEnd);
+      }
+
+      function pointerMove(event) {
+        if (!pointerCard || event.pointerId !== pointerId) return;
+
+        const distance = Math.abs(event.clientY - pointerStartY);
+        if (distance < 6) return;
+
+        if (!pointerStarted) {
+          pointerStarted = true;
+          draggedIndex = Number(pointerCard.dataset.index);
+          pointerCard.classList.add("dragging");
+        }
+
+        event.preventDefault();
+
+        const cards = [...notesList.querySelectorAll(".card")];
+        const target = cards.find(card => {
+          if (card === pointerCard) return false;
+          const rect = card.getBoundingClientRect();
+          return event.clientY > rect.top && event.clientY < rect.bottom;
+        });
+
+        cards.forEach(card => card.classList.remove("drop-target"));
+        if (target) {
+          target.classList.add("drop-target");
+        }
+      }
+
+      function pointerEnd(event) {
+        if (!pointerCard || event.pointerId !== pointerId) return;
+
+        if (pointerStarted) {
+          const cards = [...notesList.querySelectorAll(".card")];
+          const target = cards.find(card => {
+            if (card === pointerCard) return false;
+            const rect = card.getBoundingClientRect();
+            return event.clientY > rect.top && event.clientY < rect.bottom;
+          });
+
+          if (target) {
+            moveNote(draggedIndex, Number(target.dataset.index));
+          } else {
+            pointerCard.classList.remove("dragging");
+            draggedIndex = null;
+          }
+        }
+
+        pointerCard.releasePointerCapture?.(pointerId);
+        pointerCard.removeEventListener("pointermove", pointerMove);
+        pointerCard.removeEventListener("pointerup", pointerEnd);
+        pointerCard.removeEventListener("pointercancel", pointerEnd);
+
+        pointerCard = null;
+        pointerId = null;
+        pointerStarted = false;
+
+        document.querySelectorAll(".drop-target").forEach(card => card.classList.remove("drop-target"));
+      }
+
+      /* ==========================================
+         REORDER ENGINE
+         ========================================== */
+
+      function moveNote(from, to) {
+        if (
+          from === null ||
+          to === null ||
+          from === to ||
+          from < 0 ||
+          to < 0 ||
+          from >= notes.length ||
+          to >= notes.length
+        ) {
+          return;
+        }
+
+        const [item] = notes.splice(from, 1);
+        notes.splice(to, 0, item);
+
+        saveNotes();
+        renderNotes();
+        showToast("Notes reordered");
+      }
+
+      /* ==========================================
+         TOAST
+         ========================================== */
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove("show"), 1800);
+      }
+
+      /* ==========================================
+         EVENTS
+         ========================================== */
+
+      addBtn.addEventListener("click", addNote);
+
+      noteInput.addEventListener("keydown", event => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+          event.preventDefault();
+          addNote();
+        }
+      });
+
+      /* Initial render */
       renderNotes();
-      showToast("Notes reordered");
-    }
-  }
 
-  function handleDragEnd() {
-    this.classList.remove("dragging");
-    draggedIndex = null;
-  }
-
-  function showToast(message) {
-    toast.textContent = message;
-    toast.classList.add("show");
-    clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => toast.classList.remove("show"), 1800);
-  }
-
-  // Keyboard shortcuts
-  addBtn.addEventListener("click", addNote);
-
-  noteInput.addEventListener("keydown", (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-      event.preventDefault();
-      addNote();
-    }
-  });
-
-  modalClose.addEventListener("click", closeModal);
-
-  modalOverlay.addEventListener("click", (event) => {
-    if (event.target === modalOverlay) closeModal();
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeModal();
-  });
-
-  // PWA install prompt.
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredPrompt = event;
-    installBtn.style.display = "flex";
-  });
-
-  installBtn.addEventListener("click", async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-
-    try {
-      await deferredPrompt.userChoice;
-    } catch {}
-
-    deferredPrompt = null;
-    installBtn.style.display = "none";
-  });
-
-  window.addEventListener("appinstalled", () => {
-    deferredPrompt = null;
-    installBtn.style.display = "none";
-    showToast("App installed");
-  });
-
-  // Render.
-  renderNotes();
-})();
-</script>
+    })();
+  </script>
 </body>
 </html>
