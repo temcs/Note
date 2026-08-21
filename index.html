@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>স্বাগতম এফিলিয়েট এ</title>
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#11998e">
+    
+    <!-- Google Fonts: Hind Siliguri for Bengali typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Hind Siliguri', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #311042, #022c22);
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
+            padding: 20px;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 40px 30px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #38ef7d, #11998e);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(56, 239, 125, 0.35);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .icon-box svg {
+            width: 42px;
+            height: 42px;
+            fill: #ffffff;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, #ffffff, #a7f3d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.3;
+        }
+
+        p {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: #e2e8f0;
+            margin-bottom: 30px;
+        }
+
+        .timer-container {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: none; /* Hidden by default until countdown starts */
+        }
+
+        .timer-text {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .seconds {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #38ef7d;
+            display: inline-block;
+            min-width: 30px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            border-radius: 99px;
+            /* animation will be added via JS */
+        }
+
+        @keyframes progress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        .btn-link {
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 0.95rem;
+            color: #38ef7d;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .btn-link:hover {
+            color: #a7f3d0;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            p {
+                font-size: 1rem;
+            }
+        }
+
+        /* PWA Install Dialog Styles */
+        .install-dialog-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .install-dialog-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .install-dialog {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .install-dialog-overlay.active .install-dialog {
+            transform: translateY(0);
+        }
+
+        .install-dialog h2 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .install-dialog p {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn-install {
+            background: linear-gradient(135deg, #38ef7d, #11998e);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-install:hover {
+            opacity: 0.9;
+        }
+
+        .btn-close {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #475569;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-close:hover {
+            background: #334155;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="icon-box">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </div>
+
+        <h1>স্বাগতম এফিলিয়েট এ</h1>
+        
+        <p>
+            এখন থেকে শুধুমাত্র মেম্বার যুক্ত করেই আপনি ইনকাম করতে পারবেন। আপনার কাছে আমরা খুব দ্রুত কল করে বিস্তারিত জানিয়ে দেবো।
+        </p>
+
+        <div class="timer-container" id="timerContainer">
+            <div class="timer-text">
+                আপনাকে রিডাইরেক্ট করা হচ্ছে <span id="countdown" class="seconds">3</span> সেকেন্ডের মধ্যে...
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
+
+        <a href="https://aff.mamubaji.site/bn-bd/login" class="btn-link">সরাসরি যেতে এখানে ক্লিক করুন</a>
+    </div>
+
+    <!-- Install App Dialog -->
+    <div class="install-dialog-overlay" id="installOverlay">
+        <div class="install-dialog">
+            <h2>Install App</h2>
+            <p>Install our application for a better experience and easy access.</p>
+            <div class="dialog-buttons">
+                <button class="btn-close" id="closeInstallBtn">Close</button>
+                <button class="btn-install" id="installBtn">Install APK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // PWA Setup and Flow
+        const targetUrl = "https://aff.mamubaji.site/bn-bd/login";
+        let timeLeft = 3;
+        const countdownElement = document.getElementById("countdown");
+        const timerContainer = document.getElementById("timerContainer");
+        const progressBar = document.getElementById("progressBar");
+        let timer = null;
+
+        let deferredPrompt;
+        const installOverlay = document.getElementById('installOverlay');
+        const installBtn = document.getElementById('installBtn');
+        const closeInstallBtn = document.getElementById('closeInstallBtn');
+
+        // Check if already installed
+        const isAppInstalled = localStorage.getItem('pwa-installed') === 'true' || window.matchMedia('(display-mode: standalone)').matches;
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        function startCountdown() {
+            // Show the timer
+            timerContainer.style.display = "block";
+            
+            timeLeft = 3;
+            countdownElement.textContent = timeLeft;
+            progressBar.style.animation = 'progress 3s linear forwards';
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft >= 0) {
+                    countdownElement.textContent = timeLeft;
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    window.location.href = targetUrl;
+                }
+            }, 1000);
+        }
+
+        if (isAppInstalled) {
+            // If already installed, skip prompt and start countdown
+            startCountdown();
+        } else {
+            // Listen for beforeinstallprompt
+            let promptTriggered = false;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // Prevent the mini-infobar from appearing on mobile
+                e.preventDefault();
+                // Stash the event so it can be triggered later
+                deferredPrompt = e;
+                promptTriggered = true;
+                
+                // Show our custom dialog
+                installOverlay.classList.add('active');
+            });
+
+            // Fallback: If beforeinstallprompt doesn't fire within 1.5 seconds, start countdown anyway
+            setTimeout(() => {
+                if (!promptTriggered) {
+                    startCountdown();
+                }
+            }, 1500);
+        }
+
+        closeInstallBtn.addEventListener('click', () => {
+            installOverlay.classList.remove('active');
+            startCountdown();
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    localStorage.setItem('pwa-installed', 'true');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                // We no longer need the prompt
+                deferredPrompt = null;
+                installOverlay.classList.remove('active');
+                
+                // Proceed with countdown
+                startCountdown();
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            // Fired when the app is successfully installed
+            localStorage.setItem('pwa-installed', 'true');
+            installOverlay.classList.remove('active');
+            if(!timerContainer.style.display || timerContainer.style.display === "none") {
+                startCountdown();
+            }
+        });
+    </script>
+</body>
+</html>
